@@ -35,14 +35,18 @@ void checkNumberOfArguments(int argc)
 }
 
 
-int checkEncryptOrDecrypt(char *encryptOrDecrypt)
+EncryptOrDecrypt_t checkEncryptOrDecrypt(char *encryptOrDecryptArg)
 {
-    if(strcmp(encryptOrDecrypt, "-e") == 0 || strcmp(encryptOrDecrypt, "--encrypt") == 0)
+    EncryptOrDecrypt_t encryptOrDecrypt;
+
+    if(strcmp(encryptOrDecryptArg, "-e") == 0 || strcmp(encryptOrDecryptArg, "--encrypt") == 0)
     {
+        encryptOrDecrypt = encrypt;
         return TRUE;
     } 
-    else if(strcmp(encryptOrDecrypt, "-d") == 0 || strcmp(encryptOrDecrypt, "--decrypt") == 0)
+    else if(strcmp(encryptOrDecryptArg, "-d") == 0 || strcmp(encryptOrDecryptArg, "--decrypt") == 0)
     {
+        encryptOrDecrypt = decrypt;
         return FALSE;
     } 
     else 
@@ -115,19 +119,19 @@ uint64_t returnDecimalKey(char *hexKey)
 int mockMain(int argc, char *argv[])
 {
     int error = 0;
-    int encrypt = 0;
+    EncryptOrDecrypt_t EncryptOrDecrypt;
     uint64_t key = 0;
-    char *encryptOrDecrypt = argv[1];
+    char *encryptOrDecryptArg = argv[1];
     char *keyInHex = argv[2];
     char *targetFilePath = argv[3];
     char *destinationFilePath = argv[4];
 
     checkNumberOfArguments(argc);
-    encrypt = checkEncryptOrDecrypt(encryptOrDecrypt);
+    EncryptOrDecrypt = checkEncryptOrDecrypt(encryptOrDecryptArg);
     checkKey(keyInHex);
     key = returnDecimalKey(keyInHex);
 
-    if(encrypt)
+    if(EncryptOrDecrypt = encrypt)
     {
         struct EncryptionInformation encryptionInformation = {LASTCIPHERTEXT, CHECKSUM, ARRAYOFSUBKEYS, 
         NOOFBLOCKS, SIZEOFLASTBLOCK, PLAINTEXTFILEPOINTER, CIPHERTEXTFILEPOINTER};
@@ -144,7 +148,7 @@ int mockMain(int argc, char *argv[])
         error = closeFiles(encryptionInformation.plaintextFilePointer, encryptionInformation.cipertextFilePointer);
         if(error == -1) errorHandler(encryptionInformation.plaintextFilePointer, encryptionInformation.cipertextFilePointer);
     } 
-    else 
+    else
     {
         struct DecryptionInformation decryptionInformation = {LASTCIPHERTEXT, CHECKSUM, ARRAYOFSUBKEYS, NOOFBLOCKS, 
         PENULTIMATE, SIZEOFPENULTIMATEBLOCK, FINALBLOCK, PLAINTEXTFILEPOINTER, CIPHERTEXTFILEPOINTER};

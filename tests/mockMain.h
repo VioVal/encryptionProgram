@@ -1,5 +1,5 @@
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef MOCKMAIN_H
+#define MOCKMAIN_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,8 +10,14 @@
 #define TRUE 1
 #define FALSE 0
 
+typedef enum EncryptOrDecrypt
+{
+    encrypt,
+    decrypt
+} EncryptOrDecrypt_t; 
+
 void checkNumberOfArguments(int argc);
-int checkEncryptOrDecrypt(char encryptOrDecrypt[]);
+EncryptOrDecrypt_t checkEncryptOrDecrypt(char encryptOrDecrypt[]);
 void checkKey(char key[]);
 uint64_t returnDecimalKey(char hexKey[]);
 
