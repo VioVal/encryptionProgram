@@ -59,7 +59,6 @@ int desWithCbccForEncryption(struct EncryptionInformation *encryptionInformation
 {
     int error = 0;
     uint64_t currentBlock = 0;
-    size_t limit = encryptionInformation->noOfBlocks - 1;
 
     error = fseek(encryptionInformation->plaintextFilePointer, 0, SEEK_SET);
     if(error != 0)
@@ -70,8 +69,10 @@ int desWithCbccForEncryption(struct EncryptionInformation *encryptionInformation
 
     for(size_t i = 0; i < encryptionInformation->noOfBlocks; i++)
     {
-        error = fread(&currentBlock, 1, (i < limit ? 8 : encryptionInformation->sizeOfLastBlock), encryptionInformation->plaintextFilePointer);
-        if(error != (i < limit ? 8 : encryptionInformation->sizeOfLastBlock))
+        size_t blockSize = (i < encryptionInformation->noOfBlocks - 1 ? 8 : encryptionInformation->sizeOfLastBlock);
+
+        error = fread(&currentBlock, 1, blockSize, encryptionInformation->plaintextFilePointer);
+        if(error != blockSize)
         {
             errorMessage = readError;
             return -1;
