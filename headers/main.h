@@ -10,10 +10,9 @@
 #define TRUE 1
 #define FALSE 0
 
-void printProgramInstructions();
 void checkNumberOfArguments(int argc);
 int checkEncryptOrDecrypt(char encryptOrDecrypt[]);
-int checkKey(char key[]);
-uint64_t returnKey(char hexKey[]);
+void checkKey(char key[]);
+uint64_t returnDecimalKey(char hexKey[]);
 
 #endif

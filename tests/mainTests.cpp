@@ -28,26 +28,25 @@ TEST(mainTests, checkEncryptOrDecryptTests)
 
 TEST(mainTests, checkKeyTests)
 {
-    char arrayOfTestKeys[][30] = {"e6fa4cb274fa5bd2", "", "zzzzzzzzzzzzzzzz", "1abcf43acbd367923", "0000000074fa5bd2",
+    char arrayOfTestKeys[][30] = {"", "zzzzzzzzzzzzzzzz", "1abcf43acbd367923", "0000000074fa5bd2",
         "ffffffff74fa5bd2", "e6fa4cb200000000", "e6fa4cb2ffffffff"};
 
-    EXPECT_EQ(checkKey(arrayOfTestKeys[0]), 0);
-    EXPECT_EQ(checkKey(arrayOfTestKeys[1]), -1);
-    EXPECT_EQ(checkKey(arrayOfTestKeys[2]), -1);
-    EXPECT_EQ(checkKey(arrayOfTestKeys[3]), -1);
-    EXPECT_EQ(checkKey(arrayOfTestKeys[4]), -1);
-    EXPECT_EQ(checkKey(arrayOfTestKeys[5]), -1);
-    EXPECT_EQ(checkKey(arrayOfTestKeys[6]), -1);
-    EXPECT_EQ(checkKey(arrayOfTestKeys[7]), -1);
+    EXPECT_DEATH(checkKey(arrayOfTestKeys[0]), "");
+    EXPECT_DEATH(checkKey(arrayOfTestKeys[1]), "");
+    EXPECT_DEATH(checkKey(arrayOfTestKeys[2]), "");
+    EXPECT_DEATH(checkKey(arrayOfTestKeys[3]), "");
+    EXPECT_DEATH(checkKey(arrayOfTestKeys[4]), "");
+    EXPECT_DEATH(checkKey(arrayOfTestKeys[5]), "");
+    EXPECT_DEATH(checkKey(arrayOfTestKeys[6]), "");
 }
 
 
-TEST(mainTests, returnKeyTest)
+TEST(mainTests, returnDecimalKeyTest)
 {
     char hexKey[] = "e6fa4cb274fa5bd2";
     uint64_t key = 16643699702251543506ul;
 
-    EXPECT_EQ(returnKey(hexKey), key);
+    EXPECT_EQ(returnDecimalKey(hexKey), key);
 }
 
 
@@ -58,7 +57,7 @@ TEST(mainTests, encryptAndDecryptTest)
     char arrayOfFilePaths[6][60] = {"../../tests/mockFiles/mockMainTestFile.txt", "../../tests/mockFiles/encryptedTestFile",
         "../../tests/mockFiles/encryptedTestFile", "../../tests/mockFiles/decryptedMockMainTestFile.txt", "../../tests/mockFiles/mockMainTestFile.txt", "../../tests/mockFiles/decryptedMockMainTestFile.txt"};
 
-    key = returnKey(hexKey);
+    key = returnDecimalKey(hexKey);
 
     struct EncryptionInformation encryptionInformation = {LASTCIPHERTEXT, CHECKSUM, ARRAYOFSUBKEYS, 
         NOOFBLOCKS, SIZEOFLASTBLOCK, PLAINTEXTFILEPOINTER, CIPHERTEXTFILEPOINTER};

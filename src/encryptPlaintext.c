@@ -20,6 +20,8 @@ int checkFileIsntTooLarge(size_t sizeOfFile)
         errorMessage = sizeOfFile;
         return -1;
     }
+
+    return 0;
 }
 
 
@@ -48,6 +50,8 @@ int writeInitialisationVector(struct EncryptionInformation *encryptionInformatio
         errorMessage = writeError;
         return -1;
     }
+
+    return 0;
 }
 
 
@@ -98,6 +102,8 @@ int desWithCbccForEncryption(struct EncryptionInformation *encryptionInformation
 
         currentBlock = 0;
     }
+
+    return 0;
 }
 
 
@@ -119,6 +125,8 @@ int writeFinalBlock(struct EncryptionInformation *encryptionInformation)
         errorMessage = writeError;
         return -1;
     }
+
+    return 0;
 }
 
 
@@ -175,4 +183,6 @@ int encryptPlaintext(struct EncryptionInformation *encryptionInformation, uint64
     successMessage();
 
     closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+
+    return 0;
 }

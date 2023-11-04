@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
-#include "../headers/main.h"
+#include "../tests/mockMain.h"
 #include "../headers/errorHandling.h"
 #include "../headers/encryptPlaintext.h"
 #include "../headers/decryptCiphertext.h"
@@ -16,7 +16,7 @@
 enum ErrorMessage errorMessage = none;
 
 
-void printProgramInstructions()
+static void printProgramInstructions()
 {
     printf("This program uses the DES encryption algorithm along with the CBCC mode to encrypt files.\n\nIt takes 4 arguments, which are as follows.\n\nThe first argument must be \"-e\" or \"--encrypt\" for encryption, or \"-d\" or \"--decrypt\"\n\nThe second must be a 64 bit key in hexedecimal. That means it should 16 charactes long.\n\nThe third argument should be the absolute or relative path to the file you would like to encrypt or decrypt.\n\nThe forth should be where you would like the encrypted or decrypted file to be written. Use the absolute or relative path with the name of the file you would like to use. If it is an already existing file it will be overwritten.\n");
 }
@@ -53,20 +53,37 @@ int checkEncryptOrDecrypt(char *encryptOrDecrypt)
 }
 
 
-int checkKey(char *key)
+static void checkWeakKey(char keyHalf[9])
 {
+    const char weakKeyHalf1[] = "00000000";
+    const char weakKeyHalf2[] = "FFFFFFFF";
+
+    size_t keySize = sizeof(char) * 8;
+
+    if(memcmp(keyHalf, weakKeyHalf1, keySize) == 0 || memcmp(keyHalf, weakKeyHalf2, keySize) == 0)
+    {
+        errorMessage = weakKey;
+        errorHandler(NULL, NULL);
+    }
+}
+
+
+void checkKey(char *key)
+{
+    int error = 0;
+
     for(int i = 0; i < strlen(key); i++)
     {
         if(isxdigit(key[i]) == 0){
             errorMessage = keyInWrongBase;
-            return -1;
+            errorHandler(NULL, NULL);
         }
     }
 
     if(strlen(key) != 16)
     {
         errorMessage = wrongKeySize;
-        return -1;
+        errorHandler(NULL, NULL);
     }
 
     char firstHalf[9];
@@ -82,23 +99,12 @@ int checkKey(char *key)
         secondHalf[i] = toupper(key[i+8]);
     }
 
-    char weakKeyHalf1[] = "00000000";
-    char weakKeyHalf2[] = "FFFFFFFF";
-
-    size_t keySize = sizeof(char) * 8;
-
-    if(memcmp(firstHalf, weakKeyHalf1, keySize) == 0 || memcmp(secondHalf, weakKeyHalf1, keySize) == 0 ||
-    memcmp(firstHalf, weakKeyHalf2, keySize) == 0 || memcmp(secondHalf, weakKeyHalf2, keySize) == 0)
-    {
-        errorMessage = weakKey;
-        return -1;
-    }
-
-    return 0;
+    checkWeakKey(firstHalf);
+    checkWeakKey(secondHalf);
 }
 
 
-uint64_t returnKey(char *hexKey)
+uint64_t returnDecimalKey(char *hexKey)
 {
     uint64_t key = 0;
     key = strtoul(hexKey, NULL, 16);
@@ -119,8 +125,7 @@ int mockMain(int argc, char *argv[])
     checkNumberOfArguments(argc);
     encrypt = checkEncryptOrDecrypt(encryptOrDecrypt);
     checkKey(keyInHex);
-    if(errorMessage > 0) errorHandler(NULL, NULL);
-    key = returnKey(keyInHex);
+    key = returnDecimalKey(keyInHex);
 
     if(encrypt)
     {

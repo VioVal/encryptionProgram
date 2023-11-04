@@ -12,9 +12,7 @@
 
 void checkNumberOfArguments(int argc);
 int checkEncryptOrDecrypt(char encryptOrDecrypt[]);
-int checkKey(char key[]);
-uint64_t returnKey(char *hexKey);
-int encryptPlaintext(struct EncryptionInformation *encryptionInformation, uint64_t key);
-int decryptCiphertext(struct DecryptionInformation *decryptionInformation, uint64_t key);
+void checkKey(char key[]);
+uint64_t returnDecimalKey(char hexKey[]);
 
 #endif

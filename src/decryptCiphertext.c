@@ -43,6 +43,8 @@ int setLastCipherTextToInitialisationVector(uint64_t *lastCiphertext, FILE *cipe
         errorMessage = readError;
         return -1;
     }
+
+    return 0;
 }
 
 
@@ -147,6 +149,8 @@ int writePenultimateBlock(struct DecryptionInformation *decryptionInformation)
         errorMessage = writeError;
         return -1;
     }
+
+    return 0;
 }
 
 
