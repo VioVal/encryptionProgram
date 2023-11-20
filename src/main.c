@@ -26,7 +26,12 @@ void checkNumberOfArguments(int argc)
 {
     if(argc != 5)
     {
-        if(argc > 1)
+        if(argc == 1)
+        {
+            printProgramInstructions();
+            errorHandler(NULL, NULL);
+        }
+        else
         {
             errorMessage = numberOfArguments;
             errorHandler(NULL, NULL);
@@ -42,12 +47,12 @@ EncryptOrDecrypt_t checkEncryptOrDecrypt(char *encryptOrDecryptArg)
     if(strcmp(encryptOrDecryptArg, "-e") == 0 || strcmp(encryptOrDecryptArg, "--encrypt") == 0)
     {
         encryptOrDecrypt = encrypt;
-        return TRUE;
+        return encryptOrDecrypt;
     } 
     else if(strcmp(encryptOrDecryptArg, "-d") == 0 || strcmp(encryptOrDecryptArg, "--decrypt") == 0)
     {
         encryptOrDecrypt = decrypt;
-        return FALSE;
+        return encryptOrDecrypt;
     } 
     else 
     {
@@ -131,7 +136,7 @@ int main(int argc, char *argv[])
     checkKey(keyInHex);
     key = returnDecimalKey(keyInHex);
 
-    if(EncryptOrDecrypt = encrypt)
+    if(EncryptOrDecrypt == encrypt)
     {
         struct EncryptionInformation encryptionInformation = {LASTCIPHERTEXT, CHECKSUM, ARRAYOFSUBKEYS, 
         NOOFBLOCKS, SIZEOFLASTBLOCK, PLAINTEXTFILEPOINTER, CIPHERTEXTFILEPOINTER};

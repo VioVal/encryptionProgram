@@ -16,6 +16,8 @@ int closeFile(FILE *filePointer)
         errorMessage = closeError;
         return -1;
     }
+    
+    return 0;
 }
 
 int closeFiles(FILE *firstFilePointer, FILE *secondFilePointer)
@@ -39,6 +41,8 @@ int openFileToBeRead(char filePath[], FILE **filePointer)
         errorMessage = openErrorReadFile;
         return -1;
     }
+
+    return 0;
 }
 
 int openFileToBeWritten(char filePath[], FILE **filePointer)
@@ -50,6 +54,8 @@ int openFileToBeWritten(char filePath[], FILE **filePointer)
         errorMessage = openErrorWriteFile;
         return -1;
     }
+
+    return 0;
 }
 
 size_t checkSizeOfFile(FILE *filePointer)
