@@ -273,18 +273,18 @@ uint64_t combineHalves(struct HalvesOfText halvesOfText)
 
     for(int i = HALFSIZE-1; i >= 0; i--)
     {
-        if((halvesOfText.rightHalf >> i) & 1)
+        if((halvesOfText.rightHalf >> i) & 0x01)
         {
-            ciphertext ^= 1;
+            ciphertext ^= 0x01;
         }
         ciphertext <<= 1;
     }
     
     for(int i = HALFSIZE-1; i >= 0; i--)
     {
-        if((halvesOfText.leftHalf >> i) & 1)
+        if((halvesOfText.leftHalf >> i) & 0x01)
         {
-            ciphertext ^= 1;
+            ciphertext ^= 0x01;
         }
         if(i > 0)
         {

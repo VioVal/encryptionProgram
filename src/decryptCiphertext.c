@@ -89,6 +89,7 @@ uint64_t desWithCbccForDecryption(struct DecryptionInformation *decryptionInform
             errorMessage = writeError;
             return -1;
         }
+        
         currentBlock = 0;
     }
 }

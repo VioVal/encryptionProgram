@@ -24,12 +24,11 @@ static void displayErrorMessages()
         "Testing\n" 
         };
 
-    if(errorMessage > 0 && errorMessage <= 15)
-    {
-        printf("%s", arrayOfErrorMessages[errorMessage]);
-    }
+    
+    printf("%s", arrayOfErrorMessages[errorMessage]);
+    
 
-    if(errorMessage > 8 && errorMessage <= 14)
+    if(errno != 0)
     {
         perror("error: ");
     }
