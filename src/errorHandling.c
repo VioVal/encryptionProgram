@@ -3,7 +3,7 @@
 #include "../headers/errorHandling.h"
 #include "../headers/fileFunctions.h"
 
-static void displayErrorMessages()
+static void displayErrorMessages(ErrorMessage errorMessage)
 {
     const char arrayOfErrorMessages[15][100] = 
     {
@@ -35,17 +35,8 @@ static void displayErrorMessages()
 }
 
 
-void errorHandler(FILE *firstFilePointer, FILE *secondFilePointer)
+void errorHandler(ErrorMessage errorMessage)
 {
-    displayErrorMessages();
-
-    int error = 0;
-    error = closeFiles(firstFilePointer, secondFilePointer);
-    if(error == -1)
-    {
-        errorMessage = closeError;
-        displayErrorMessages();
-    }
-
+    displayErrorMessages(errorMessage);
     exit(-1);
 }

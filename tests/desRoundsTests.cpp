@@ -16,12 +16,9 @@ uint64_t correctArrayOfSubkeys[16] = {68154083931694, 225794418531735, 252371827
 
 TEST(desRoundsTests, splitPlaintextIntoHalvesTests)
 {   
-    //Elena: One test one assertion, make sure that the test name is self explanatory. e.g. if doing boundaries analysis specify what is upper boundary, lower boundary.
-    // Elena: Correct = expected
     struct HalvesOfText correctHalvesOfText = {2963567701, 3464339268};
     struct HalvesOfText testHalvesOfText = {0, 0};
 
-    // Elena: returned value should be named current value
     testHalvesOfText = splitPlaintextIntoHalves(correctPlainText, testHalvesOfText);
 
     EXPECT_EQ(correctHalvesOfText.leftHalf, testHalvesOfText.leftHalf);

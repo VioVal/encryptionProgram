@@ -19,10 +19,10 @@ TEST(mainTests, checkEncryptOrDecryptTests)
     char arrayOfTestString[6][14] = {"", "hfeuiaohweu", "-e", "--encrypt", "-d", "--decrypt"};
     EXPECT_DEATH(checkEncryptOrDecrypt(arrayOfTestString[0]), "");
     EXPECT_DEATH(checkEncryptOrDecrypt(arrayOfTestString[1]), "");
-    EXPECT_EQ(checkEncryptOrDecrypt(arrayOfTestString[2]), 1);
-    EXPECT_EQ(checkEncryptOrDecrypt(arrayOfTestString[3]), 1);
-    EXPECT_EQ(checkEncryptOrDecrypt(arrayOfTestString[4]), 0);
-    EXPECT_EQ(checkEncryptOrDecrypt(arrayOfTestString[5]), 0);
+    EXPECT_EQ(checkEncryptOrDecrypt(arrayOfTestString[2]), encrypt);
+    EXPECT_EQ(checkEncryptOrDecrypt(arrayOfTestString[3]), encrypt);
+    EXPECT_EQ(checkEncryptOrDecrypt(arrayOfTestString[4]), decrypt);
+    EXPECT_EQ(checkEncryptOrDecrypt(arrayOfTestString[5]), decrypt);
 }
 
 

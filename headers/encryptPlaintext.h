@@ -7,6 +7,7 @@
 #include <time.h>
 #include <math.h>
 #include "../headers/fileFunctions.h"
+#include "../headers/errorHandling.h"
 
 #define LENGTHOFARRAY 16
 #define KEYARRAYSIZE 16
@@ -19,7 +20,7 @@
 #define PLAINTEXTFILEPOINTER NULL
 #define CIPHERTEXTFILEPOINTER NULL
 
-struct EncryptionInformation
+typedef struct EncryptionInformation
 {
     uint64_t lastCiphertext;
     uint64_t checkSum;
@@ -28,16 +29,14 @@ struct EncryptionInformation
     size_t sizeOfLastBlock;
     FILE *plaintextFilePointer;
     FILE *cipertextFilePointer;
-};
+} EncryptionInformation;
 
-void openPlaintextFileForEncryption(char plaintextFilePath[], FILE **plaintextFilePointer);
-void openCipertextFileForEncryption(char ciphertextFilePath[], FILE **ciphertextFilePointer);
-int checkFileIsntTooLarge(size_t sizeOfFile);
-int writeInitialisationVector(struct EncryptionInformation *encryptionInformation);
-int desWithCbccForEncryption(struct EncryptionInformation *encryptionInformation);
-int writeFinalBlock(struct EncryptionInformation *encryptionInformation);
-void closePlaintextFile(FILE *plaintextFilePointer);
-int checkIfWriteWasSuccessful(int noOfBlocks, FILE *cipertextFilePointer);
-int encryptPlaintext(struct EncryptionInformation *encryptionInformation, uint64_t key);
+size_t checkFileIsntTooLarge(size_t sizeOfFile);
+ErrorMessage writeInitialisationVector(EncryptionInformation *encryptionInformation);
+ErrorMessage desWithCbccForEncryption(EncryptionInformation *encryptionInformation);
+ErrorMessage writeFinalBlock(EncryptionInformation *encryptionInformation);
+ErrorMessage closePlaintextFile(FILE *plaintextFilePointer);
+ErrorMessage checkIfWriteWasSuccessful(EncryptionInformation *encryptionInformation);
+ErrorMessage encryptPlaintext(EncryptionInformation *encryptionInformation, uint64_t key);
 
 #endif

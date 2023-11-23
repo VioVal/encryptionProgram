@@ -3,59 +3,39 @@
 #include "../headers/fileFunctions.h"
 #include "../headers/errorHandling.h"
 
-extern enum ErrorMessage errorMessage;
-
-int closeFile(FILE *filePointer)
+void closeFile(FILE *filePointer)
 {
-    if(filePointer == NULL) return 0;
-    int error = 0;
-    error = fclose(filePointer);
-    
-    if(error != 0)
-    {
-        errorMessage = closeError;
-        return -1;
-    }
-    
-    return 0;
+    fclose(filePointer);
 }
 
-int closeFiles(FILE *firstFilePointer, FILE *secondFilePointer)
+void closeFiles(FILE *firstFilePointer, FILE *secondFilePointer)
 {
-    int error = 0;
-
-    error = closeFile(firstFilePointer);
-    error = closeFile(secondFilePointer);
-
-    if(error == -1) return -1;
-
-    return 0;
+    closeFile(firstFilePointer);
+    closeFile(secondFilePointer);
 }
 
-int openFileToBeRead(char filePath[], FILE **filePointer)
+ErrorMessage openFileToBeRead(char filePath[], FILE **filePointer)
 {
     *filePointer = fopen(filePath, "rb");
 
     if(*filePointer == NULL)
     {
-        errorMessage = openErrorReadFile;
-        return -1;
+        return openErrorReadFile;
     }
 
-    return 0;
+    return none;
 }
 
-int openFileToBeWritten(char filePath[], FILE **filePointer)
+ErrorMessage openFileToBeWritten(char filePath[], FILE **filePointer)
 {
     *filePointer = fopen(filePath, "wb+");
 
     if(*filePointer == NULL)
     {
-        errorMessage = openErrorWriteFile;
-        return -1;
+        return openErrorWriteFile;
     }
 
-    return 0;
+    return none;
 }
 
 size_t checkSizeOfFile(FILE *filePointer)
@@ -95,25 +75,4 @@ size_t calculateNoOfBlocksNeeded(size_t sizeOfFile)
         noOfBlocks += 1;
     }
     return noOfBlocks;
-}
-
-
-int compareTwoFiles(size_t sizeOfFile, FILE **firstFilePointer, FILE **secondFilePointer)
-{
-    int error = 0;
-    int firstFileByte = 0;
-    int secondFileByte = 0;
-
-    for(size_t i = 0; i < sizeOfFile; i++)
-    {
-        fread(&firstFileByte, 1, 1, *firstFilePointer);
-        fread(&secondFileByte, 1, 1, *secondFilePointer);
-
-        if(firstFileByte != secondFileByte)
-        {
-            return -1;
-        }
-    }
-
-    return 0;
 }

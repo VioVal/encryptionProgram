@@ -13,8 +13,6 @@
 #define TRUE 1
 #define FALSE 0
 
-enum ErrorMessage errorMessage = none;
-
 
 static void printProgramInstructions()
 {
@@ -24,13 +22,14 @@ static void printProgramInstructions()
 
 void checkNumberOfArguments(int argc)
 {
+    if(argc == 1)
+    {
+        printProgramInstructions();
+        exit(0);
+    }
     if(argc != 5)
     {
-        if(argc > 1)
-        {
-            errorMessage = numberOfArguments;
-            errorHandler(NULL, NULL);
-        }
+        errorHandler(numberOfArguments);
     }
 }
 
@@ -42,17 +41,16 @@ EncryptOrDecrypt_t checkEncryptOrDecrypt(char *encryptOrDecryptArg)
     if(strcmp(encryptOrDecryptArg, "-e") == 0 || strcmp(encryptOrDecryptArg, "--encrypt") == 0)
     {
         encryptOrDecrypt = encrypt;
-        return TRUE;
+        return encryptOrDecrypt;
     } 
     else if(strcmp(encryptOrDecryptArg, "-d") == 0 || strcmp(encryptOrDecryptArg, "--decrypt") == 0)
     {
         encryptOrDecrypt = decrypt;
-        return FALSE;
+        return encryptOrDecrypt;
     } 
     else 
     {
-        errorMessage = incorrectArgument;
-        errorHandler(NULL, NULL);
+        errorHandler(incorrectArgument);
     }
 }
 
@@ -66,8 +64,7 @@ static void checkWeakKey(char keyHalf[9])
 
     if(memcmp(keyHalf, weakKeyHalf1, keySize) == 0 || memcmp(keyHalf, weakKeyHalf2, keySize) == 0)
     {
-        errorMessage = weakKey;
-        errorHandler(NULL, NULL);
+        errorHandler(weakKey);
     }
 }
 
@@ -79,15 +76,13 @@ void checkKey(char *key)
     for(int i = 0; i < strlen(key); i++)
     {
         if(isxdigit(key[i]) == 0){
-            errorMessage = keyInWrongBase;
-            errorHandler(NULL, NULL);
+            errorHandler(keyInWrongBase);
         }
     }
 
     if(strlen(key) != 16)
     {
-        errorMessage = wrongKeySize;
-        errorHandler(NULL, NULL);
+        errorHandler(wrongKeySize);
     }
 
     char firstHalf[9];
@@ -116,9 +111,30 @@ uint64_t returnDecimalKey(char *hexKey)
 }
 
 
-int mockMain(int argc, char *argv[])
+int compareTwoFiles(size_t sizeOfFile, FILE **firstFilePointer, FILE **secondFilePointer)
 {
     int error = 0;
+    int firstFileByte = 0;
+    int secondFileByte = 0;
+
+    for(size_t i = 0; i < sizeOfFile; i++)
+    {
+        fread(&firstFileByte, 1, 1, *firstFilePointer);
+        fread(&secondFileByte, 1, 1, *secondFilePointer);
+
+        if(firstFileByte != secondFileByte)
+        {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+
+int mockMain(int argc, char *argv[])
+{
+    ErrorMessage errorMessage = none;
     EncryptOrDecrypt_t EncryptOrDecrypt;
     uint64_t key = 0;
     char *encryptOrDecryptArg = argv[1];
@@ -131,39 +147,45 @@ int mockMain(int argc, char *argv[])
     checkKey(keyInHex);
     key = returnDecimalKey(keyInHex);
 
-    if(EncryptOrDecrypt = encrypt)
+    if(EncryptOrDecrypt == encrypt)
     {
-        struct EncryptionInformation encryptionInformation = {LASTCIPHERTEXT, CHECKSUM, ARRAYOFSUBKEYS, 
+        EncryptionInformation encryptionInformation = {LASTCIPHERTEXT, CHECKSUM, ARRAYOFSUBKEYS, 
         NOOFBLOCKS, SIZEOFLASTBLOCK, PLAINTEXTFILEPOINTER, CIPHERTEXTFILEPOINTER};
 
-        error = openFileToBeRead(targetFilePath, &encryptionInformation.plaintextFilePointer);
-        if(error == -1) errorHandler(encryptionInformation.plaintextFilePointer, NULL);
+        errorMessage = openFileToBeRead(targetFilePath, &encryptionInformation.plaintextFilePointer);
+        if(errorMessage != none) errorHandler(errorMessage);
 
-        error = openFileToBeWritten(destinationFilePath, &encryptionInformation.cipertextFilePointer);
-        if(error == -1) errorHandler(encryptionInformation.plaintextFilePointer, encryptionInformation.cipertextFilePointer);
+        errorMessage = openFileToBeWritten(destinationFilePath, &encryptionInformation.cipertextFilePointer);
+        if(errorMessage != none)
+        {
+            closeFile(encryptionInformation.plaintextFilePointer);
+            errorHandler(errorMessage);
+        }
 
-        error = encryptPlaintext(&encryptionInformation, key);
-        if(error == -1) errorHandler(encryptionInformation.plaintextFilePointer, encryptionInformation.cipertextFilePointer);
+        errorMessage = encryptPlaintext(&encryptionInformation, key);
+        if(errorMessage != none) errorHandler(errorMessage);
 
-        error = closeFiles(encryptionInformation.plaintextFilePointer, encryptionInformation.cipertextFilePointer);
-        if(error == -1) errorHandler(encryptionInformation.plaintextFilePointer, encryptionInformation.cipertextFilePointer);
+        closeFiles(encryptionInformation.plaintextFilePointer, encryptionInformation.cipertextFilePointer);
     } 
     else
     {
-        struct DecryptionInformation decryptionInformation = {LASTCIPHERTEXT, CHECKSUM, ARRAYOFSUBKEYS, NOOFBLOCKS, 
+        DecryptionInformation decryptionInformation = {LASTCIPHERTEXT, CHECKSUM, ARRAYOFSUBKEYS, NOOFBLOCKS, 
         PENULTIMATE, SIZEOFPENULTIMATEBLOCK, FINALBLOCK, PLAINTEXTFILEPOINTER, CIPHERTEXTFILEPOINTER};
 
-        error = openFileToBeRead(targetFilePath, &decryptionInformation.cipertextFilePointer);
-        if(error == -1) errorHandler(decryptionInformation.cipertextFilePointer, NULL);
+        errorMessage = openFileToBeRead(targetFilePath, &decryptionInformation.cipertextFilePointer);
+        if(errorMessage != none) errorHandler(errorMessage);
 
-        error = openFileToBeWritten(destinationFilePath, &decryptionInformation.plaintextFilePointer);
-        if(error == -1) errorHandler(decryptionInformation.cipertextFilePointer, decryptionInformation.plaintextFilePointer);
+        errorMessage = openFileToBeWritten(destinationFilePath, &decryptionInformation.plaintextFilePointer);
+        if(errorMessage != none)
+        {
+            closeFile(decryptionInformation.cipertextFilePointer);
+            errorHandler(errorMessage);
+        }
         
-        error = decryptCiphertext(&decryptionInformation, key);
-        if(error == -1) errorHandler(decryptionInformation.cipertextFilePointer, decryptionInformation.plaintextFilePointer);
+        errorMessage = decryptCiphertext(&decryptionInformation, key);
+        if(errorMessage != none) errorHandler(errorMessage);
 
-        error = closeFiles(decryptionInformation.cipertextFilePointer, decryptionInformation.plaintextFilePointer);
-        if(error == -1) errorHandler(decryptionInformation.cipertextFilePointer, decryptionInformation.plaintextFilePointer);
+        closeFiles(decryptionInformation.cipertextFilePointer, decryptionInformation.plaintextFilePointer);
     }
 
     return 0;

@@ -4,6 +4,7 @@ extern "C"
     #include "../headers/decryptCiphertext.h"
     #include "../headers/fileFunctions.h"
     #include "../headers/subkeyGenerator.h"
+    #include "../headers/errorHandling.h"
 }
 
 
@@ -32,16 +33,15 @@ TEST(decryptCiphertextTests, reverseSubkeyArrayTests)
 
 TEST(decryptCiphertextTests, setLastCipherTextToInitialisationVectorTests)
 {
-    int error = 0;
     decryptionInformation.noOfBlocks = 4;
     char targetFilePath[] = "../../tests/mockFiles/decryptionTest";
     char destinationFilePath[] = "../../tests/mockFiles/decryptionTests.txt";
     
-    error = openFileToBeRead(targetFilePath, &decryptionInformation.cipertextFilePointer);
-    error = openFileToBeWritten(destinationFilePath, &decryptionInformation.plaintextFilePointer);
+    openFileToBeRead(targetFilePath, &decryptionInformation.cipertextFilePointer);
+    openFileToBeWritten(destinationFilePath, &decryptionInformation.plaintextFilePointer);
 
     uint64_t expectedCiphertext = 17987096311105970965ul;
-    setLastCipherTextToInitialisationVector(&decryptionInformation.lastCiphertext, decryptionInformation.cipertextFilePointer);
+    setLastCipherTextToInitialisationVector(&decryptionInformation);
     EXPECT_EQ(expectedCiphertext, decryptionInformation.lastCiphertext);
 }
 
@@ -49,7 +49,7 @@ TEST(decryptCiphertextTests, setLastCipherTextToInitialisationVectorTests)
 TEST(decryptCiphertextTests, desWithCbccForDecryptionTests)
 {
     uint64_t expectedPenultimate = 143418749551ul;
-    decryptionInformation.penultimate = desWithCbccForDecryption(&decryptionInformation);
+    desWithCbccForDecryption(&decryptionInformation);
     EXPECT_EQ(expectedPenultimate, decryptionInformation.penultimate);
 }
 
@@ -57,7 +57,7 @@ TEST(decryptCiphertextTests, desWithCbccForDecryptionTests)
 TEST(decryptCiphertextTests, decryptFinalBlockTests)
 {
     uint64_t expectedFinalBlock = 360287970189639682ul;
-    decryptionInformation.finalBlock = decryptFinalBlock(&decryptionInformation);
+    decryptFinalBlock(&decryptionInformation);
     EXPECT_EQ(expectedFinalBlock, decryptionInformation.finalBlock);
 }
 
@@ -72,11 +72,10 @@ TEST(decryptCiphertextTests, getSizeOfPenultimateBlockTests)
 
 TEST(decryptCiphertextTests, writePenultimateBlockTest)
 {
-    int error = 0;
     uint64_t expectedPenultimateBlock = 143418749551ul;
     uint64_t writtenBlock = 0;
 
-    error = writePenultimateBlock(&decryptionInformation);
+    writePenultimateBlock(&decryptionInformation);
     fseek(decryptionInformation.plaintextFilePointer, -5, SEEK_CUR);
     fread(&writtenBlock, 1, 5, decryptionInformation.plaintextFilePointer);
     
@@ -86,11 +85,13 @@ TEST(decryptCiphertextTests, writePenultimateBlockTest)
 
 TEST(decryptCiphertextTests, checkChecksumTests)
 {
-    int error = 0;
+    ErrorMessage error = none;
 
-    error = checkChecksum(decryptionInformation.noOfBlocks, decryptionInformation.finalBlock);
-    EXPECT_EQ(error, 0);
+    error = checkChecksum(&decryptionInformation);
+    EXPECT_EQ(error, none);
 
-    error = checkChecksum(0, decryptionInformation.finalBlock);
-    EXPECT_EQ(error, -1);
+    decryptionInformation.noOfBlocks = 0;
+
+    error = checkChecksum(&decryptionInformation);
+    EXPECT_EQ(error, decryptionFailure);
 }

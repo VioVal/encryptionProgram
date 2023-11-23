@@ -20,5 +20,6 @@ void checkNumberOfArguments(int argc);
 EncryptOrDecrypt_t checkEncryptOrDecrypt(char encryptOrDecrypt[]);
 void checkKey(char key[]);
 uint64_t returnDecimalKey(char hexKey[]);
+int compareTwoFiles(size_t sizeOfFile, FILE **firstFilePointer, FILE **secondFilePointer);
 
 #endif

@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-enum ErrorMessage
+typedef enum ErrorMessage
 {
     none,
     numberOfArguments, 
@@ -12,7 +12,7 @@ enum ErrorMessage
     keyInWrongBase, 
     wrongKeySize, 
     weakKey, 
-    sizeOfFile, 
+    sizeOfFileTooLarge, 
     encryptionFailure, 
     decryptionFailure, 
     openErrorReadFile, 
@@ -21,11 +21,10 @@ enum ErrorMessage
     readError, 
     writeError, 
     test 
-};
+} ErrorMessage;
 
 extern int errno;
-extern enum ErrorMessage errorMessage;
 
-void errorHandler(FILE *firstFilePointer, FILE *secondFilePointer);
+void errorHandler(ErrorMessage errorMessage);
 
 #endif

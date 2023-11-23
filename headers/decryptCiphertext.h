@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "../headers/errorHandling.h"
 
 #define LENGTHOFARRAY 16
 #define KEYARRAYSIZE 16
@@ -20,7 +21,7 @@
 #define CIPHERTEXTFILEPOINTER NULL
 
 
-struct DecryptionInformation
+typedef struct DecryptionInformation
 {
     uint64_t lastCiphertext;
     uint64_t checkSum;
@@ -31,15 +32,15 @@ struct DecryptionInformation
     uint64_t finalBlock;
     FILE *plaintextFilePointer;
     FILE *cipertextFilePointer;
-};
+} DecryptionInformation;
 
 void reverseSubkeyArray(uint64_t subkeyArray[KEYARRAYSIZE]);
-int setLastCipherTextToInitialisationVector(uint64_t *lastCiphertext, FILE *cipertextFilePointer);
-uint64_t desWithCbccForDecryption(struct DecryptionInformation *decryptionInformation);
-uint64_t decryptFinalBlock(struct DecryptionInformation *decryptionInformation);
+ErrorMessage setLastCipherTextToInitialisationVector(DecryptionInformation *decryptionInformation);
+ErrorMessage desWithCbccForDecryption(DecryptionInformation *decryptionInformation);
+ErrorMessage decryptFinalBlock(DecryptionInformation *decryptionInformation);
 size_t getSizeOfPenultimateBlock(uint64_t finalBlock);
-int writePenultimateBlock(struct DecryptionInformation *decryptionInformation);
-int checkChecksum(int noOfBlocks, uint64_t finalBlock);
-int decryptCiphertext(struct DecryptionInformation *decryptionInformation, uint64_t key);
+ErrorMessage writePenultimateBlock(DecryptionInformation *decryptionInformation);
+ErrorMessage checkChecksum(DecryptionInformation *decryptionInformation);
+ErrorMessage decryptCiphertext(struct DecryptionInformation *decryptionInformation, uint64_t key);
 
 #endif

@@ -11,17 +11,8 @@ TEST(fileFunctionTests, openFileTestsTests)
     char badFilePath[40] = "./fakeDirectory/fakefile.txt";
     FILE *filePointer = NULL;
 
-    EXPECT_EQ(openFileToBeRead(badFilePath, &filePointer), -1);
-    EXPECT_EQ(openFileToBeWritten(badFilePath, &filePointer), -1);
-}
-
-
-TEST(fileFunctionTests, closeFileTests)
-{
-    FILE *filePointer1 = NULL;
-    FILE *filePointer2 = NULL;
-
-    EXPECT_EQ(closeFiles(filePointer1, filePointer2), 0);
+    EXPECT_EQ(openFileToBeRead(badFilePath, &filePointer), openErrorReadFile);
+    EXPECT_EQ(openFileToBeWritten(badFilePath, &filePointer), openErrorWriteFile);
 }
 
 

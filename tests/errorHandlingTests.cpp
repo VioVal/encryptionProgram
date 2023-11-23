@@ -6,6 +6,6 @@ extern "C"
 
 TEST(errorHandlingTests, errorHandlerTest)
 {
-    errorMessage = test;
-    ASSERT_DEATH(errorHandler(NULL, NULL), "");
+    ErrorMessage errorMessage = test;
+    ASSERT_DEATH(errorHandler(errorMessage), "");
 }

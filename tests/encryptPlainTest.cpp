@@ -71,6 +71,9 @@ TEST(encryptPlaintextTest, writeFinalBlockTest)
 
 TEST(encryptPlaintextTest, checkIfWriteWasSuccessfulTest)
 {
-    EXPECT_EQ(checkIfWriteWasSuccessful(encryptionInformation.noOfBlocks, encryptionInformation.cipertextFilePointer), 0);
-    EXPECT_EQ(checkIfWriteWasSuccessful(0, encryptionInformation.cipertextFilePointer), -1);
+    EXPECT_EQ(checkIfWriteWasSuccessful(&encryptionInformation), none);
+
+    encryptionInformation.noOfBlocks = 0;
+
+    EXPECT_EQ(checkIfWriteWasSuccessful(&encryptionInformation), encryptionFailure);
 }

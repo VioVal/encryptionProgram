@@ -6,18 +6,13 @@
 #include "../headers/encryptPlaintext.h"
 #include "../headers/subkeyGenerator.h"
 #include "../headers/desRounds.h"
-#include "../headers/errorHandling.h"
-#include "../headers/fileFunctions.h"
-
-extern enum ErrorMessage errorMessage;
 
 
-int checkFileIsntTooLarge(size_t sizeOfFile)
+size_t checkFileIsntTooLarge(size_t sizeOfFile)
 {
     //we use a 56 bits of the final block to represent the number of 64 bit blocks.
     if(sizeOfFile > (pow(2, 56) * 8) - 1)
     {
-        errorMessage = sizeOfFile;
         return -1;
     }
 
@@ -25,15 +20,15 @@ int checkFileIsntTooLarge(size_t sizeOfFile)
 }
 
 
-int writeInitialisationVector(struct EncryptionInformation *encryptionInformation)
+ErrorMessage writeInitialisationVector(EncryptionInformation *encryptionInformation)
 {
     int error = 0;
 
     error = fseek(encryptionInformation->cipertextFilePointer, 0, SEEK_SET);
     if(error != 0)
     {
-        errorMessage = readError;
-        return -1;
+        closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+        return readError;
     }
 
     time_t currentTime;
@@ -47,15 +42,15 @@ int writeInitialisationVector(struct EncryptionInformation *encryptionInformatio
     error = fwrite(&iv, 8, 1, encryptionInformation->cipertextFilePointer);
     if(error != 1)
     {
-        errorMessage = writeError;
-        return -1;
+        closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+        return writeError;
     }
 
-    return 0;
+    return none;
 }
 
 
-int desWithCbccForEncryption(struct EncryptionInformation *encryptionInformation)
+ErrorMessage desWithCbccForEncryption(EncryptionInformation *encryptionInformation)
 {
     int error = 0;
     uint64_t currentBlock = 0;
@@ -63,8 +58,8 @@ int desWithCbccForEncryption(struct EncryptionInformation *encryptionInformation
     error = fseek(encryptionInformation->plaintextFilePointer, 0, SEEK_SET);
     if(error != 0)
     {
-        errorMessage = readError;
-        return -1;
+        closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+        return readError;
     }
 
     for(size_t i = 0; i < encryptionInformation->noOfBlocks; i++)
@@ -74,8 +69,8 @@ int desWithCbccForEncryption(struct EncryptionInformation *encryptionInformation
         error = fread(&currentBlock, 1, blockSize, encryptionInformation->plaintextFilePointer);
         if(error != blockSize)
         {
-            errorMessage = readError;
-            return -1;
+            closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+            return readError;
         }
 
         encryptionInformation->checkSum ^= currentBlock;
@@ -86,18 +81,18 @@ int desWithCbccForEncryption(struct EncryptionInformation *encryptionInformation
         error = fwrite(&currentBlock, 8, 1, encryptionInformation->cipertextFilePointer);
         if(error != 1)
         {
-            errorMessage = writeError;
-            return -1;
+            closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+            return writeError;
         }
 
         currentBlock = 0;
     }
 
-    return 0;
+    return none;
 }
 
 
-int writeFinalBlock(struct EncryptionInformation *encryptionInformation)
+ErrorMessage writeFinalBlock(EncryptionInformation *encryptionInformation)
 {
     int error = 0;
     uint64_t finalBlock = 0;
@@ -112,27 +107,27 @@ int writeFinalBlock(struct EncryptionInformation *encryptionInformation)
     error = fwrite(&finalBlock, 8, 1, encryptionInformation->cipertextFilePointer);
     if(error != 1)
     {
-        errorMessage = writeError;
-        return -1;
+        closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+        return writeError;
     }
 
-    return 0;
+    return none;
 }
 
 
-int checkIfWriteWasSuccessful(int noOfBlocks, FILE *cipertextFilePointer)
+ErrorMessage checkIfWriteWasSuccessful(EncryptionInformation *encryptionInformation)
 {
     size_t noOfBlocksWritten = 0;
 
-    noOfBlocksWritten = calculateNoOfBlocksNeeded(checkSizeOfFile(cipertextFilePointer));
+    noOfBlocksWritten = calculateNoOfBlocksNeeded(checkSizeOfFile(encryptionInformation->cipertextFilePointer));
     
-    if(noOfBlocksWritten != noOfBlocks + 2)
+    if(noOfBlocksWritten != encryptionInformation->noOfBlocks + 2)
     {
-        errorMessage = encryptionFailure;
-        return -1;
+        closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+        return encryptionFailure;
     }
 
-    return 0;
+    return none;
 }
 
 
@@ -142,37 +137,44 @@ void successMessage()
 }
 
 
-int encryptPlaintext(struct EncryptionInformation *encryptionInformation, uint64_t key)
+ErrorMessage encryptPlaintext(EncryptionInformation *encryptionInformation, uint64_t key)
 {
-    int error = 0;
+    ErrorMessage errorMessage = none;
     size_t sizeOfFile = 0;
 
     sizeOfFile = checkSizeOfFile(encryptionInformation->plaintextFilePointer);
-    if(sizeOfFile == -1) return -1;
+    if(sizeOfFile == -1)
+    {
+        closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+        return sizeOfFile;
+    }
 
-    error = checkFileIsntTooLarge(sizeOfFile);
-    if(error == -1) return -1;
+    if(checkFileIsntTooLarge(sizeOfFile) == -1)
+    {
+        closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
+        return sizeOfFileTooLarge;
+    }
 
     encryptionInformation->noOfBlocks = calculateNoOfBlocksNeeded(sizeOfFile);
     encryptionInformation->sizeOfLastBlock = calculateSizeOfLastBlock(sizeOfFile);
 
     generateSubkeysFromKey(key, encryptionInformation->arrayOfSubkeys);
 
-    error = writeInitialisationVector(encryptionInformation);
-    if(error == -1) return -1;
+    errorMessage = writeInitialisationVector(encryptionInformation);
+    if(errorMessage != none) return -errorMessage;
 
-    error = desWithCbccForEncryption(encryptionInformation);
-    if(error == -1) return -1;
+    errorMessage = desWithCbccForEncryption(encryptionInformation);
+    if(errorMessage != none) return -errorMessage;
 
-    writeFinalBlock(encryptionInformation);
-    if(error == -1) return -1;
+    errorMessage = writeFinalBlock(encryptionInformation);
+    if(errorMessage != none) return -errorMessage;
 
-    checkIfWriteWasSuccessful(encryptionInformation->noOfBlocks, encryptionInformation->cipertextFilePointer);
-    if(error == -1) return -1;
+    errorMessage = checkIfWriteWasSuccessful(encryptionInformation);
+    if(errorMessage != none) return -errorMessage;
 
     successMessage();
 
     closeFiles(encryptionInformation->plaintextFilePointer, encryptionInformation->cipertextFilePointer);
 
-    return 0;
+    return none;
 }

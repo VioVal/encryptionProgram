@@ -8,8 +8,6 @@
 #include "../headers/errorHandling.h"
 #include "../headers/fileFunctions.h"
 
-extern enum ErrorMessage errorMessage;
-
 
 void reverseSubkeyArray(uint64_t subkeyArray[KEYARRAYSIZE])
 {
@@ -26,29 +24,29 @@ void reverseSubkeyArray(uint64_t subkeyArray[KEYARRAYSIZE])
 }
 
 
-int setLastCipherTextToInitialisationVector(uint64_t *lastCiphertext, FILE *cipertextFilePointer)
+ErrorMessage setLastCipherTextToInitialisationVector(DecryptionInformation *decryptionInformation)
 {
-    int error = 0;
+    size_t error = 0;
 
-    error = fseek(cipertextFilePointer, 0, SEEK_SET);
+    error = fseek(decryptionInformation->cipertextFilePointer, 0, SEEK_SET);
     if(error != 0)
     {
-        errorMessage = readError;
-        return -1;
+        closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+        return readError;
     }
 
-    error = fread(lastCiphertext, 8, 1, cipertextFilePointer);
+    error = fread(&decryptionInformation->lastCiphertext, 8, 1, decryptionInformation->cipertextFilePointer);
     if(error != 1)
     {
-        errorMessage = readError;
-        return -1;
+        closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+        return readError;
     }
 
-    return 0;
+    return none;
 }
 
 
-uint64_t desWithCbccForDecryption(struct DecryptionInformation *decryptionInformation)
+ErrorMessage desWithCbccForDecryption(DecryptionInformation *decryptionInformation)
 {
     int error = 0;
     uint64_t currentBlock = 0;
@@ -57,8 +55,8 @@ uint64_t desWithCbccForDecryption(struct DecryptionInformation *decryptionInform
     error = fseek(decryptionInformation->plaintextFilePointer, 0, SEEK_SET);
     if(error != 0)
     {
-        errorMessage = readError;
-        return -1;
+        closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+        return readError;
     }
 
     // minus 2 because the write file won't have the first or last blocks
@@ -68,8 +66,8 @@ uint64_t desWithCbccForDecryption(struct DecryptionInformation *decryptionInform
         error = fread(&currentBlock, 8, 1, decryptionInformation->cipertextFilePointer);
         if(error != 1)
         {
-            errorMessage = readError;
-            return -1;
+            closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+            return readError;
         }
 
         currentCiphertext = currentBlock;
@@ -80,14 +78,15 @@ uint64_t desWithCbccForDecryption(struct DecryptionInformation *decryptionInform
 
         if(i >= decryptionInformation->noOfBlocks - 3)
         {
-            return currentBlock;
+            decryptionInformation->penultimate = currentBlock;
+            return none;
         }
 
         error = fwrite(&currentBlock, 8, 1, decryptionInformation->plaintextFilePointer);
         if(error != 1)
         {
-            errorMessage = writeError;
-            return -1;
+            closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+            return writeError;
         }
         
         currentBlock = 0;
@@ -95,23 +94,25 @@ uint64_t desWithCbccForDecryption(struct DecryptionInformation *decryptionInform
 }
 
 
-uint64_t decryptFinalBlock(struct DecryptionInformation *decryptionInformation)
+ErrorMessage decryptFinalBlock(DecryptionInformation *decryptionInformation)
 {
-    int error = 0;
+    size_t error = 0;
     uint64_t finalBlock = 0;
 
     error = fread(&finalBlock, 8, 1, decryptionInformation->cipertextFilePointer);
     if(error != 1)
     {
-        errorMessage = readError;
-        return -1;
+        closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+        return readError;
     }
 
     finalBlock = desRounds(finalBlock, decryptionInformation->arrayOfSubkeys);
     finalBlock ^= decryptionInformation->lastCiphertext;
     finalBlock ^= decryptionInformation->checkSum;
 
-    return finalBlock;
+    decryptionInformation->finalBlock = finalBlock;
+
+    return none;
 }
 
 
@@ -135,7 +136,7 @@ size_t getSizeOfPenultimateBlock(uint64_t finalBlock)
 }
 
 
-int writePenultimateBlock(struct DecryptionInformation *decryptionInformation)
+ErrorMessage writePenultimateBlock(DecryptionInformation *decryptionInformation)
 {
     int error = 0;
 
@@ -147,15 +148,15 @@ int writePenultimateBlock(struct DecryptionInformation *decryptionInformation)
     error = fwrite(&decryptionInformation->penultimate, 1, decryptionInformation->sizeOfPenultimateBlock, decryptionInformation->plaintextFilePointer);
     if(error != decryptionInformation->sizeOfPenultimateBlock)
     {
-        errorMessage = writeError;
-        return -1;
+        closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+        return writeError;
     }
 
-    return 0;
+    return none;
 }
 
 
-int checkChecksum(int noOfBlocks, uint64_t finalBlock)
+ErrorMessage checkChecksum(DecryptionInformation *decryptionInformation)
 {
     uint64_t mask = 0;
 
@@ -169,15 +170,15 @@ int checkChecksum(int noOfBlocks, uint64_t finalBlock)
         }
     }
 
-    finalBlock &= mask;
+    decryptionInformation->finalBlock &= mask;
 
-    if(finalBlock != noOfBlocks - 2)
+    if(decryptionInformation->finalBlock != decryptionInformation->noOfBlocks - 2)
     {
-        errorMessage = decryptionFailure;
-        return -1;
+        closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+        return decryptionFailure;
     }
 
-    return 0;
+    return none;
 }
 
 
@@ -187,36 +188,43 @@ void printSuccessMessage()
 }
 
 
-int decryptCiphertext(struct DecryptionInformation *decryptionInformation, uint64_t key)
+ErrorMessage decryptCiphertext(DecryptionInformation *decryptionInformation, uint64_t key)
 {
-    int error = 0;
+    ErrorMessage errorMessage = none;
     size_t sizeOfFile = 0;
 
     sizeOfFile = checkSizeOfFile(decryptionInformation->cipertextFilePointer);
-    if(sizeOfFile == -1) return -1;
+    if(sizeOfFile == -1)
+    {
+        closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+        return readError;
+    }
+
     decryptionInformation->noOfBlocks = calculateNoOfBlocksNeeded(sizeOfFile);
 
     generateSubkeysFromKey(key, decryptionInformation->arrayOfSubkeys);
     reverseSubkeyArray(decryptionInformation->arrayOfSubkeys);
 
-    error = setLastCipherTextToInitialisationVector(&decryptionInformation->lastCiphertext, decryptionInformation->cipertextFilePointer);
-    if(error == -1) return -1;
+    errorMessage = setLastCipherTextToInitialisationVector(decryptionInformation);
+    if(errorMessage != none) return errorMessage;
 
-    decryptionInformation->penultimate = desWithCbccForDecryption(decryptionInformation);
-    if(decryptionInformation->penultimate == -1) return -1;
+    errorMessage = desWithCbccForDecryption(decryptionInformation);
+    if(errorMessage != none) return errorMessage;
 
-    decryptionInformation->finalBlock = decryptFinalBlock(decryptionInformation);
-    if(decryptionInformation->finalBlock == -1) return -1;
+    errorMessage = decryptFinalBlock(decryptionInformation);
+    if(errorMessage != none) return errorMessage;
 
     decryptionInformation->sizeOfPenultimateBlock = getSizeOfPenultimateBlock(decryptionInformation->finalBlock);
 
-    error = writePenultimateBlock(decryptionInformation);
-    if(error == -1) return -1;
+    errorMessage = writePenultimateBlock(decryptionInformation);
+    if(errorMessage != none) return errorMessage;
 
-    error = checkChecksum(decryptionInformation->noOfBlocks, decryptionInformation->finalBlock);
-    if(error == -1) return -1;
+    errorMessage = checkChecksum(decryptionInformation);
+    if(errorMessage != none) return errorMessage;
 
     printSuccessMessage();
 
     closeFiles(decryptionInformation->cipertextFilePointer, decryptionInformation->plaintextFilePointer);
+
+    return none;
 }
